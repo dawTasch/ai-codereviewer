@@ -182,6 +182,12 @@ async function createReviewComment(
 }
 
 async function main() {
+  if (!OPENAI_API_KEY || OPENAI_API_KEY.trim() === "") {
+    console.error("❌ OPENAI_API_KEY is missing or empty!");
+  } else {
+    console.log("✅ OPENAI_API_KEY is set.");
+  }
+  console.log(
   const prDetails = await getPRDetails();
   let diff: string | null;
   const eventData = JSON.parse(
