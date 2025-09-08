@@ -166,6 +166,54 @@ function createComment(
   });
 }
 
+const MAX_BATCH_SIZE = 5;
+
+async function safeCreateReview(
+  owner: string,
+  repo: string,
+  pull_number: number,
+  comments: Array<{ body: string; path: string; line: number }>
+) {
+  for (let i = 0; i < comments.length; i += MAX_BATCH_SIZE) {
+    const batch = comments.slice(i, i + MAX_BATCH_SIZE);
+
+    try {
+      const response = await octokit.pulls.createReview({
+        owner,
+        repo,
+        pull_number,
+        comments: batch,
+        event: "COMMENT",
+      });
+
+      // Inspect rate limit headers
+      const remaining = Number(response.headers["x-ratelimit-remaining"]);
+      const reset = Number(response.headers["x-ratelimit-reset"]);
+      const retryAfter = Number(response.headers["retry-after"]);
+
+      if (retryAfter) {
+        console.log(`⏳ Secondary rate limit hit, retrying after ${retryAfter}s`);
+        await sleep(retryAfter * 1000);
+      } else if (remaining === 0) {
+        const now = Math.floor(Date.now() / 1000);
+        const waitMs = (reset - now) * 1000;
+        console.log(`⏳ Rate limit reset in ${waitMs / 1000}s, waiting...`);
+        await sleep(waitMs);
+      } else {
+        // Tiny delay anyway to avoid bursts
+        await sleep(1000);
+      }
+    } catch (err: any) {
+      console.error("GitHub API error:", err);
+      throw err;
+    }
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function createReviewComment(
   owner: string,
   repo: string,
@@ -182,11 +230,6 @@ async function createReviewComment(
 }
 
 async function main() {
-  if (!OPENAI_API_KEY || OPENAI_API_KEY.trim() === "") {
-    console.error("❌ OPENAI_API_KEY is missing or empty!");
-  } else {
-    console.log("✅ OPENAI_API_KEY is set.");
-  }
   console.log(
   const prDetails = await getPRDetails();
   let diff: string | null;
@@ -240,7 +283,7 @@ async function main() {
 
   const comments = await analyzeCode(filteredDiff, prDetails);
   if (comments.length > 0) {
-    await createReviewComment(
+    await safeCreateReview(
       prDetails.owner,
       prDetails.repo,
       prDetails.pull_number,
