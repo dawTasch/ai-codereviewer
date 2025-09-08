@@ -86,6 +86,7 @@ function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
 - Write the comment in GitHub Markdown format.
 - Use the given description only for the overall context and only comment the code.
 - IMPORTANT: NEVER suggest adding comments to the code.
+- keep it short and concise, maximum 3-5 sentences per comment.
 
 Review the following code diff in the file "${
     file.to
@@ -174,6 +175,7 @@ async function safeCreateReview(
   pull_number: number,
   comments: Array<{ body: string; path: string; line: number }>
 ) {
+  console.log(`Creating ${comments.length} review comments in batches...`);
   for (let i = 0; i < comments.length; i += MAX_BATCH_SIZE) {
     const batch = comments.slice(i, i + MAX_BATCH_SIZE);
 
