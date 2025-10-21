@@ -87,6 +87,10 @@ function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
 - Use the given description only for the overall context and only comment the code.
 - IMPORTANT: NEVER suggest adding comments to the code.
 - keep it short and concise, maximum 3-5 sentences per comment.
+- focus on potential bugs like null or argument exception
+- insepct logic gaps, invalid comprasion
+- do not provide suggestion like "you have changed interface ensure that implementaion reflects it"
+- be focus on code quality and its funcionality, assume that code is complied
 
 Review the following code diff in the file "${
     file.to
