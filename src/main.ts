@@ -90,7 +90,8 @@ function createPrompt(file: File, chunk: Chunk, prDetails: PRDetails): string {
 - focus on potential bugs like null or argument exception
 - insepct logic gaps, invalid comprasion
 - do not provide suggestion like "you have changed interface ensure that implementaion reflects it"
-- be focus on code quality and its funcionality, assume that code is complied
+- be focused on code quality and its funcionality, assume that code is complied
+- ignore new line comments
 
 Review the following code diff in the file "${
     file.to
